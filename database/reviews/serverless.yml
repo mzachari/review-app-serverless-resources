@@ -1,0 +1,63 @@
+service: review-app-mvp-ext-database-reviews
+
+custom:
+  # Our stage is based on what is passed in when running serverless
+  # commands. Or fallsback to what we have set in the provider section.
+  stage: ${opt:stage, self:provider.stage}
+  # Set the table name here so we can use it while testing locally
+  reviewTable: ${self:custom.stage}-reviews
+  backupEnabled:
+    dev: false
+    stage: false
+    prod: true
+
+
+provider:
+  name: aws
+  stage: dev
+  region: ${opt:region,'ap-south-1'}
+  profile: ${opt:profile, 'staginghta'}
+
+resources:
+  Resources:
+    #Review Table Config
+    ReviewTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        # Generate a name based on the stage
+        TableName: ${self:custom.reviewTable}
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: ${self:custom.backupEnabled.${opt:stage, self:provider.stage}}
+        AttributeDefinitions:
+          - AttributeName: productId
+            AttributeType: S
+          - AttributeName: reviewId
+            AttributeType: S  
+          - AttributeName: lastUpdatedTime
+            AttributeType: S
+        KeySchema:
+          - AttributeName: productId
+            KeyType: HASH
+          - AttributeName: reviewId
+            KeyType: RANGE  
+        LocalSecondaryIndexes:
+          - IndexName: "lastUpdatedTimeIndex"
+            KeySchema:
+              - AttributeName: productId
+                KeyType: HASH
+              - AttributeName: lastUpdatedTime
+                KeyType: RANGE  
+            Projection:
+              ProjectionType: ALL 
+        # Set the capacity to auto-scale
+        BillingMode: PAY_PER_REQUEST
+
+
+  Outputs:
+    ReviewTableArn:
+      Value:
+         Fn::GetAtt:
+          - ReviewTable
+          - Arn
+      Export:
+        Name: ${self:custom.stage}-ReviewTableArn
