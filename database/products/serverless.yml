@@ -31,16 +31,11 @@ resources:
         AttributeDefinitions:
           - AttributeName: productId
             AttributeType: S
-          - AttributeName: lastUpdatedTime
-            AttributeType: S
         KeySchema:
           - AttributeName: productId
             KeyType: HASH
-          - AttributeName: lastUpdatedTime
-            KeyType: RANGE  
         # Set the capacity to auto-scale
         BillingMode: PAY_PER_REQUEST
-
 
   Outputs:
     ProductTableArn:
