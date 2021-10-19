@@ -6,6 +6,7 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   # Set the table name here so we can use it while testing locally
   reviewTable: ${self:custom.stage}-reviews
+  connectionTable: ${self:custom.stage}-connection
   backupEnabled:
     dev: false
     stage: false
@@ -50,6 +51,20 @@ resources:
             Projection:
               ProjectionType: ALL 
         # Set the capacity to auto-scale
+        BillingMode: PAY_PER_REQUEST
+    ConnectionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        # Generate a name based on the stage
+        TableName: ${self:custom.connectionTable}
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: ${self:custom.backupEnabled.${opt:stage, self:provider.stage}}
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH 
         BillingMode: PAY_PER_REQUEST
 
 
